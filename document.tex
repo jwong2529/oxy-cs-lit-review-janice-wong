@@ -100,11 +100,12 @@ Beam search improves translation quality by considering possible translations at
     \end{enumerate}
     \item NAT Mask-Prediction Iterations (n): 
 
-NAT models use a masked-prediction approach. In this approach, the model initially generates a rough translation where some words may be missing or incorrect. The model then refines the translation with subsequence iterations by masking uncertain words and predicting them again based on the surrounding context. I will experiment with n = 1 iterations (fastest but less refined) vs. n = 3 (higher accuracy but more compute-intensive).
+NAT models use a masked-prediction approach. In this approach, the model initially generates a rough translation where some words may be missing or incorrect. The model then refines the translation with subsequent iterations by masking uncertain words and predicting them again based on the surrounding context. I will experiment with n = 1 iterations (fastest but less refined) vs. n = 3 (higher accuracy but more compute-intensive).
+\item Shallow Decoder Optimization: 
+\textcite{KasaiDeepEncoders2021} demonstrated that deep encoders and shallow decoders improve inference speed without degrading quality. I will test reducing decoder depth from 6 layers to 3 layers.
 
 
 \end{enumerate}
-Shallow Decoder Optimization: \textcite{KasaiDeepEncoders2021} demonstrated that deep encoders and shallow decoders improve inference speed without degrading quality. I will test reducing decoder depth from 6 layers to 3 layers.
 
 \subsection{Implementation Tools}
 
@@ -163,7 +164,7 @@ A manually curated benchmark set of slang expressions and informal phrases will 
 
     \item Code-Switching Handling
 
-Since real-world conversations often mix languages, evaluating code-switching translations separately may be needed. Performance will be assessed based on how accurately it translates mixed-language phrases.
+Since real-world conversations often mix languages, evaluating code-switching translations separately may be needed. Performance will be assessed based on how accurately the model translates mixed-language phrases.
 
 \end{enumerate}
 
