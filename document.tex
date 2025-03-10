@@ -1,0 +1,194 @@
+\documentclass[10pt,twocolumn]{article}
+
+% use the oxycomps style file
+\usepackage{oxycomps}
+
+% usage: \fixme[comments describing issue]{text to be fixed}
+% define \fixme as not doing anything special
+\newcommand{\fixme}[2][]{#2}
+% overwrite it so it shows up as red
+\renewcommand{\fixme}[2][]{\textcolor{red}{#2}}
+% overwrite it again so related text shows as footnotes
+%\renewcommand{\fixme}[2][]{\textcolor{red}{#2\footnote{#1}}}
+
+% read references.bib for the bibtex data
+\bibliography{references}
+
+% include metadata in the generated pdf file
+\pdfinfo{
+    /Title (COMP 390: Literature Review)
+    /Author (Janice Wong)
+}
+
+% set the title and author information
+\title{COMP 390: \\ Literature Review}
+\author{Janice Wong}
+\affiliation{Occidental College}
+\email{jwong6@oxy.edu}
+
+\begin{document}
+
+\maketitle
+
+
+\section{Technical Background}
+
+
+\subsection{The Foundation of Machine Translation}
+
+Machine translation (MT) refers to the use of computer algorithms to translate text or speech from one language to another. Over time, MT has evolved from rule-based and statistical methods to neural approaches. Early models relied on rule-based translation, which used manually defined grammar rules but struggled with linguistic ambiguity and the complexities of natural language. This led to Statistical Machine Translation (SMT), as introduced by \textcite{BrownMathematicsOfSMT1993}, which applied probability models to predict the most likely equivalents for words and phrases. Eventually, SMT was outperformed by Neural Machine Translation (NMT), which was pioneered by \textcite{BahdanauNMT2015}, which employs neural networks to model the translation process. NMT systems can capture complex linguistic patterns and produce more fluent translations. Finally, the breakthrough came with \textcite{VaswaniTransformers2017}, who proposed transformers, which utilizes self-attention mechanisms to process input data more efficiently, leading to improved translation quality.
+
+\subsection{Real-Time Translation and Latency Considerations}
+
+Standard transformer-based models are accurate, however they suffer from high inference latency, which is the time it takes for the model to generate a translation. This delay poses issues for real-time applications like live chat translations. \textcite{GuNonAutoregressive2018} proposed Non-Autoregressive NMT (NAT), which reduces latency by generating entire sentences in parallel rather than sequential word prediction. \textcite{KasaiDeepEncoders2021} demonstrated that using deep encoders and shallow decoders speeds up inference for autoregressive models without significant loss of quality.
+
+\subsection{Handling Slang and Informal Language}
+
+A major challenge in chat translation is processing informal language. Traditional NMT models are typically trained on structured text, so they often fail to translate slang, abbreviations, and code-switching accurately. Informal expressions and shortened forms, especially Internet slang, are highly context-dependent and evolve rapidly, making them difficult for models to interpret accurately. 
+
+\section{Prior Work}
+
+\subsection{Existing Solutions and Their Limitations}
+
+\subsubsection{Commercial APIs}
+
+The most widely used real-time translation services, such as Google Translate \cite{WuGoogleTranslate2016} and DeepL \cite{DeepL}, rely on high-performing NMT models trained on massive datasets. While effective for formal text, they often struggle with slang, abbreviations, and informal language \cite{BaldwinNoisyText2013}. Additionally, these proprietary APIs lack overall transparency, which makes customization difficult for the user.
+
+\subsubsection{Open-Source NMT Models}
+
+There are some open-source alternatives, such as Marian NMT \cite{Junczys-DowmuntMarian2018} and OPUS-MT \cite{TiedemannOPUS2020}, which allow for customization. However, fine-tuning these models requires extensive domain-specific data. This type of data is often unavailable for informal speech and chat conversations.
+
+\subsection{A New Approach is Needed}
+
+As mentioned already, existing solutions provide high-quality translations for formal contexts, but struggle with real-time informal conversations. Unlike prior work, this project aims to:
+
+\begin{itemize}
+    \item Reduce latency: Implementing a shallow decoder structure \cite{KasaiDeepEncoders2021} speeds up translation.
+    \item Improve slang handling: Fine-tuning transformers for slang and abbreviation recognition is essential for accurate translation of informal language.
+    \item Support code-switching: Adapting multilingual models to handle mid-sentence language changes can improve translation accuracy in multilingual conversations.
+\end{itemize}
+So, this system will improve standard APIs with these strategies and make real-time chat translation more effective in casual communication settings.
+
+
+\section{Methods}
+
+For this project, I will implement a real-time chat translation system optimized for casual messaging which includes handling slang and informal speech. Given the challenges identified earlier, a transformer-based neural machine translation (NMT) model will be used due to its superior performance in multilingual translation tasks \cite{VaswaniTransformers2017}. Specifically, the M2M-100 model \cite{FanEnglishCentric2021} will serve as the base model, as it supports direct translation between 100+ language pairs without relying on English as an intermediary.
+
+Additionally, a slang-detection and preprocessing module will be implemented using tBERT \cite{PeinelttBERT2020} to classify informal expressions and replace them with their standardized equivalents before translation. This pre-processing step ensures that the translation mode is fed with more structured input. This improves translation quality for slang-heavy messages.
+
+And to address real-time constraints, I will employ non-autoregressive translation (NAT) techniques \cite{GuNonAutoregressive2018} to reduce latency. Traditional autoregressive transformers generate one token at a time, but NAT models generate whole sentences in parallel, which significantly improves speed.
+
+\subsection{Hyperparameters and Exploration}
+Several hyperparameters will be explored and optimized to balance translation speed and accuracy.
+
+
+\begin{enumerate}
+    \item Model Size and Quantization
+    \begin{enumerate}
+        \item Base model: The standard M2M-100 model has 15 billion parameters, but for real-time applications, I will explore smaller versions.
+        \item Quantization: I will apply 8-bit quantization \cite{ZafrirQ8BERT2019} to reduce computational overhead while maintaining translation quality.
+    \end{enumerate}
+    \item Beam Search vs. Greedy Decoding
+Beam Search Width (k): 
+
+Beam search improves translation quality by considering possible translations at each step. I will compare k = 1 (fastest but less accurate) and k = 5 (higher quality but slower) to determine the best trade-off for real-time translation.
+
+    \item Slang Handling Preprocessing
+    \begin{enumerate}
+        \item Threshold for slang replacement: The slang-detection model will output a confidence score. I will experiment with different confidence thresholds (e.g., 0.7 vs. 0.9) to balance between preserving informal expressions and ensuring comprehensibility.
+        \item Dynamic slang lexicon updates: To ensure adaptability, the slang lexicon will be updated dynamically using data collected from real-world chat logs. Frequency-based updating strategies will be tested.
+    \end{enumerate}
+    \item NAT Mask-Prediction Iterations (n): 
+
+NAT models use a masked-prediction approach. In this approach, the model initially generates a rough translation where some words may be missing or incorrect. The model then refines the translation with subsequence iterations by masking uncertain words and predicting them again based on the surrounding context. I will experiment with n = 1 iterations (fastest but less refined) vs. n = 3 (higher accuracy but more compute-intensive).
+
+
+\end{enumerate}
+Shallow Decoder Optimization: \textcite{KasaiDeepEncoders2021} demonstrated that deep encoders and shallow decoders improve inference speed without degrading quality. I will test reducing decoder depth from 6 layers to 3 layers.
+
+\subsection{Implementation Tools}
+
+The project will be implemented using PyTorch \cite{PyTorch} for model training and inference. I will use Hugging Face’s Transformers library for integrating M2M-100 and tBERT \cite{HuggingFace}. Deployment will be optimized using ONNX Runtime to accelerate inference on CPU/GPU \cite{ONNX}. Real-time translation will be enabled via WebSockets for low-latency message delivery.
+
+\section{Evaluation Metrics}
+
+The effectiveness of this real-time chat translation system can be evaluated through a combination of traditional machine translation (MT) metrics, real-time performance benchmarks, and user evaluations. Prior work in NMT has largely relied on standard benchmarks such as BLEU, METEOR, and chrF, but these metrics may not fully capture the nuances of slang translation and real-time constraints. Therefore, along with these standard metrics, this project will incorporate latency measurements, user comprehension testing, and a slang translation accuracy metric.
+
+\subsection{Standard Machine Translation Metrics}
+
+Existing translation research primarily evaluates models based on metrics that are accuracy-driven:
+
+
+\begin{enumerate}
+    \item BLEU (Bilingual Evaluation Understudy) Score \cite{PapineniBLEU2002}
+    
+Measures n-gram overlap between the model output and reference translations. BLEU is widely used in MT but struggles with evaluating informal or creative language structures.
+
+    \item METEOR \cite{BanerjeeMETEOR2005}
+    
+An improvement over BLEU, incorporating synonym matching and stemming to better assess semantic similarity. This is useful for informal text where slang may have multiple valid equivalents.
+
+    \item chrF \cite{PopovicCHRF2015}
+    
+A character-level F-score metric, which is useful for languages with complex word structures (e.g., German, Finnish) and short informal texts (e.g., chats, tweets).
+
+\end{enumerate}
+Prior research suggests that for an NMT model to be considered competitive, it should ideally achieve at least 30-40 BLEU on general-domain translation tasks \cite{WuGoogleTranslate2016} and \cite{VaswaniTransformers2017}. However, informal text often lacks standardized reference translations. This makes BLEU less reliable.
+
+\subsection{Real-Time Performance Metrics}
+
+Speed is obviously a critical evaluation factor since the system is designed for chat translation. The following latency benchmarks will be used:
+
+\begin{enumerate}
+    \item Translation Latency
+
+The time taken for a message to be translated, measured in milliseconds (ms). For human perception, a response time of around 100 milliseconds is perceived as instantaneous. Therefore, I will aim to achieve a latency in the approximate 100-200 milliseconds threshold.
+
+    \item Throughput
+
+Number of words translated per second, to assess the model’s ability to scale with real-time usage. 
+
+
+\end{enumerate}
+To optimize latency, this project will explore quantization \cite{ZafrirQ8BERT2019} and non-autoregressive decoding \cite{KasaiDeepEncoders2021}, which have been shown to improve speed without significant accuracy loss.
+
+\subsection{Slang-Specific Accuracy Metrics}
+
+Since traditional MT metrics do not capture slang translation quality, I will develop a specialized evaluation approach.
+
+\begin{enumerate}
+    \item Slang Translation Accuracy
+
+A manually curated benchmark set of slang expressions and informal phrases will be used to evaluate performance. Accuracy will be measured as the proportion of correctly translated slang terms based on human annotators’ judgments. A score above 90\% is considered competitive for specialized translation tasks. 
+
+    \item Code-Switching Handling
+
+Since real-world conversations often mix languages, evaluating code-switching translations separately may be needed. Performance will be assessed based on how accurately it translates mixed-language phrases.
+
+\end{enumerate}
+
+\subsection{Human Evaluation and User Feedback}
+
+Automated metrics do not always align with a human’s perception of translation quality, especially for informal language. To address this, I will facilitate a small-scale user study where bilingual participants rate translations based on these two factors:
+
+\begin{enumerate}
+    \item Fluency and naturalness
+
+How well the translation reads as natural conversation. Rated on a 1-5 Likert scale.
+
+    \item Comprehensibility
+
+Whether the meaning of the translated text is clear and understandable to a native speaker of the target language. Rated on a 1-5 Likert scale.
+
+\end{enumerate}
+A successful model should achieve at least a 4.0/5 on fluency and comprehensibility in human evaluations.
+
+\printbibliography
+
+\appendix
+
+\clearpage
+
+\onecolumn
+
+\end{document}
